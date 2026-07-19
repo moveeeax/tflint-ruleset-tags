@@ -25,7 +25,7 @@ Go 1.22, `terraform-linters/tflint-plugin-sdk`, HCL config.
 ```bash
 plugin "tags" {
   enabled = true
-  source  = "github.com/cybercapybara/tflint-ruleset-tags"
+  source  = "github.com/moveeeax/tflint-ruleset-tags"
 }
 tflint --init && tflint
 ```
