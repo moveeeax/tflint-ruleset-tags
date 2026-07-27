@@ -1,0 +1,15 @@
+# Built plugin binary (anchored to repo root so it never matches source dirs)
+/tflint-ruleset-tags
+/tflint-ruleset-tags.exe
+/dist/
+
+# tflint plugin install dir / local caches
+.tflint.d/
+
+# Editor / OS noise
+*.swp
+.DS_Store
+
+# Keep test fixtures tracked no matter what
+!examples/**
+!**/testdata/**

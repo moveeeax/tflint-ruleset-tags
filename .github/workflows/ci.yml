@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.25.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Verify formatting
+        run: test -z "$(gofmt -l .)"
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -race ./...
+      - name: Build
+        run: go build -o /tmp/tflint-ruleset-tags .
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+      - name: Build and install plugin locally
+        run: |
+          go build -o tflint-ruleset-tags .
+          mkdir -p "$HOME/.tflint.d/plugins"
+          mv tflint-ruleset-tags "$HOME/.tflint.d/plugins/tflint-ruleset-tags"
+      - name: Install tflint
+        run: |
+          curl -sL -o /tmp/tflint.zip \
+            https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip
+          unzip -o -q /tmp/tflint.zip -d /usr/local/bin
+          tflint --version
+      - name: Write integration config
+        run: |
+          cat > /tmp/it.tflint.hcl <<'EOF'
+          plugin "terraform" {
+            enabled = false
+          }
+          plugin "tags" {
+            enabled = true
+          }
+          rule "aws_resource_missing_tags" {
+            enabled  = true
+            required = ["Environment", "Owner"]
+            patterns = { Environment = "^(prod|staging|dev)$" }
+          }
+          EOF
+      - name: Good fixtures must pass
+        run: |
+          tflint --chdir=examples/good --config=/tmp/it.tflint.hcl
+      - name: Bad fixtures must fail
+        run: |
+          set +e
+          tflint --chdir=examples/bad --config=/tmp/it.tflint.hcl
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then
+            echo "expected tflint to report issues on bad fixtures, but it passed"
+            exit 1
+          fi
+          echo "tflint reported issues as expected (exit $code)"
