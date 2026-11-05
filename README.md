@@ -1,7 +1,7 @@
 # tflint-ruleset-tags
 
 [![ci](https://github.com/moveeeax/tflint-ruleset-tags/actions/workflows/ci.yml/badge.svg)](https://github.com/moveeeax/tflint-ruleset-tags/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/go-1.25-00ADD8?logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/go-1.26%2B-00ADD8?logo=go)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > Never ship an untagged AWS resource again — enforce your tagging policy in CI.
@@ -19,17 +19,34 @@ where the change is, instead of in a cost report nobody reads.
 
 ## Install
 
-Add the plugin to your `.tflint.hcl` and run `tflint --init`:
+There is no published release yet, so `tflint --init` has nothing to download.
+Build the plugin from source (Go 1.26 or newer) and install it into TFLint's
+local plugin directory:
+
+```bash
+go install github.com/moveeeax/tflint-ruleset-tags@latest
+mkdir -p ~/.tflint.d/plugins
+cp "$(go env GOPATH)/bin/tflint-ruleset-tags" ~/.tflint.d/plugins/
+```
+
+Or from a clone:
+
+```bash
+git clone https://github.com/moveeeax/tflint-ruleset-tags
+cd tflint-ruleset-tags
+go build -o ~/.tflint.d/plugins/tflint-ruleset-tags .
+```
+
+Then enable the plugin in your `.tflint.hcl` **without** `source`/`version`,
+so TFLint loads the local binary instead of trying to download a release:
 
 ```hcl
 plugin "tags" {
   enabled = true
-  source  = "github.com/moveeeax/tflint-ruleset-tags"
-  version = "0.1.0"
 }
 ```
 
-`tflint --init` downloads the released binary for your platform and verifies it.
+TFLint also honours `TFLINT_PLUGIN_DIR` if you keep plugins elsewhere.
 
 ## Configure
 
@@ -98,9 +115,9 @@ go test ./...        # unit tests (uses the SDK's mock runner)
 go build -o tflint-ruleset-tags .
 ```
 
-To try the local build without a release, drop the binary in
+To try a local build, drop the binary in
 `~/.tflint.d/plugins/tflint-ruleset-tags` and enable `plugin "tags"` with no
-`source`.
+`source` (see [Install](#install)).
 
 ## License
 
