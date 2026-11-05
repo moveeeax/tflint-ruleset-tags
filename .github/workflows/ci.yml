@@ -6,16 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.25.x"]
+        go-version: ["1.26.x", "1.27.x"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go-version }}
       - name: Verify formatting
@@ -30,19 +33,21 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
-          go-version: "1.25.x"
+          go-version: "1.26.x"
       - name: Build and install plugin locally
         run: |
           go build -o tflint-ruleset-tags .
           mkdir -p "$HOME/.tflint.d/plugins"
           mv tflint-ruleset-tags "$HOME/.tflint.d/plugins/tflint-ruleset-tags"
       - name: Install tflint
+        env:
+          TFLINT_VERSION: v0.65.0
         run: |
-          curl -sL -o /tmp/tflint.zip \
-            https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip
+          curl -fsSL -o /tmp/tflint.zip \
+            "https://github.com/terraform-linters/tflint/releases/download/${TFLINT_VERSION}/tflint_linux_amd64.zip"
           unzip -o -q /tmp/tflint.zip -d /usr/local/bin
           tflint --version
       - name: Write integration config

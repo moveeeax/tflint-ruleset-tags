@@ -1,7 +1,6 @@
 plugin "tags" {
+  # Loaded from ~/.tflint.d/plugins (no release published yet; see README).
   enabled = true
-  source  = "github.com/moveeeax/tflint-ruleset-tags"
-  version = "0.1.0"
 }
 
 rule "aws_resource_missing_tags" {
